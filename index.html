@@ -944,6 +944,17 @@ async function loadAll() {
   const allVals = Object.values(clpeData).map(d => d[currentIndicator]);
   breaks = computeBreaks(allVals);
 
+  // Filter to metropolitan France only (lat 41–51.5, lon -5.5–9.6)
+  const metroFilter = feat => {
+    if (!feat.geometry || !feat.geometry.coordinates) return false;
+    const coords = feat.geometry.type === 'Polygon'
+      ? feat.geometry.coordinates[0]
+      : feat.geometry.coordinates[0][0];
+    if (!coords || !coords[0]) return false;
+    const [lon, lat] = coords[0];
+    return lat >= 41.0 && lat <= 51.5 && lon >= -5.5 && lon <= 9.6;
+  };
+
   // Région layer
   regGeo.features = regGeo.features.filter(metroFilter);
   regLayer = L.geoJSON(regGeo, {
@@ -971,16 +982,6 @@ async function loadAll() {
   }).addTo(map);
 
   // CLPE layer
-  // Filter to metropolitan France only
-  const metroFilter = feat => {
-    if (!feat.geometry || !feat.geometry.coordinates) return false;
-    const coords = feat.geometry.type === 'Polygon'
-      ? feat.geometry.coordinates[0]
-      : feat.geometry.coordinates[0][0];
-    if (!coords || !coords[0]) return false;
-    const [lon, lat] = coords[0];
-    return lat >= 41.0 && lat <= 51.5 && lon >= -5.5 && lon <= 9.6;
-  };
   clpeGeo.features = clpeGeo.features.filter(metroFilter);
   clpeLayer = L.geoJSON(clpeGeo, {
     style: feature => styleFeature(feature),
