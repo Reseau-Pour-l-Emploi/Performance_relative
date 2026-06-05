@@ -1448,10 +1448,17 @@ function renderTable(rows, selId) {
   table.appendChild(tbody);
   wrap.appendChild(table);
 
-  // Scroll en haut puis vers la ligne sélectionnée
-  document.getElementById('sidebar-content').scrollTop = 0;
+  // Scroll vers la ligne sélectionnée dans le conteneur
   const selectedTr = tbody.querySelector('.selected-row');
-  if (selectedTr) setTimeout(() => selectedTr.scrollIntoView({ block: 'start', behavior: 'smooth' }), 80);
+  if (selectedTr) {
+    const container = document.getElementById('sidebar-content');
+    container.scrollTop = 0;
+    setTimeout(() => {
+      const containerTop = container.getBoundingClientRect().top;
+      const rowTop = selectedTr.getBoundingClientRect().top;
+      container.scrollTop = rowTop - containerTop;
+    }, 0);
+  }
 }
 
 function closeSidebar() {
