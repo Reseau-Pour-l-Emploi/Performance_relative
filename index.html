@@ -1448,17 +1448,8 @@ function renderTable(rows, selId) {
   table.appendChild(tbody);
   wrap.appendChild(table);
 
-  // Scroll vers la ligne sélectionnée dans le conteneur
-  const selectedTr = tbody.querySelector('.selected-row');
-  if (selectedTr) {
-    const container = document.getElementById('sidebar-content');
-    container.scrollTop = 0;
-    setTimeout(() => {
-      const containerTop = container.getBoundingClientRect().top;
-      const rowTop = selectedTr.getBoundingClientRect().top;
-      container.scrollTop = rowTop - containerTop;
-    }, 0);
-  }
+  // Remettre la scroll au sommet à chaque nouvelle sélection
+  wrap.scrollTop = 0;
 }
 
 function closeSidebar() {
