@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Carte des Comités Locaux Pour l'Emploi</title>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- France Travail fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Marianne:wght@400;500;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── France Travail Design System ── */
+    :root {
+      --ft-blue:        #005EB8;
+      --ft-blue-dark:   #003B7A;
+      --ft-blue-light:  #E8F0FB;
+      --ft-teal:        #00A8A8;
+      --ft-orange:      #E55A28;
+      --ft-grey-100:    #F6F6F6;
+      --ft-grey-200:    #ECECEC;
+      --ft-grey-400:    #C1C1C1;
+      --ft-grey-600:    #6B6B6B;
+      --ft-grey-800:    #3A3A3A;
+      --ft-white:       #FFFFFF;
+
+      /* Choropleth colour ramp (blue-teal) */
+      --c1: #EAF4FB;
+      --c2: #B0D6EF;
+      --c3: #71B3DC;
+      --c4: #328FC8;
+      --c5: #005EB8;
+
+      /* Highlight for nearby CLPEs */
+      --hl-fill:   rgba(229,90,40,0.30);
+      --hl-stroke: #E55A28;
+
+      --sidebar-w: 420px;
+      --header-h:  64px;
+      --toolbar-h: 56px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Marianne', system-ui, sans-serif;
+      background: var(--ft-grey-100);
+      color: var(--ft-grey-800);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    header {
+      height: var(--header-h);
+      background: var(--ft-blue);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 0 24px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,.25);
+      z-index: 1000;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo-mark {
+      width: 40px;
+      height: 40px;
+      background: var(--ft-white);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .logo-mark svg { width: 28px; height: 28px; }
+    .logo-text {
+      display: flex;
+      flex-direction: column;
+    }
+    .logo-text span:first-child {
+      font-size: 11px;
+      font-weight: 400;
+      color: rgba(255,255,255,.75);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+    .logo-text span:last-child {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--ft-white);
+      line-height: 1.1;
+    }
+    .header-sep {
+      width: 1px;
+      height: 32px;
+      background: rgba(255,255,255,.25);
+      margin: 0 8px;
+    }
+    .header-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--ft-white);
+      flex: 1;
+    }
+    .header-badge {
+      background: var(--ft-teal);
+      color: var(--ft-white);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 12px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      height: var(--toolbar-h);
+      background: var(--ft-white);
+      border-bottom: 1px solid var(--ft-grey-200);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 20px;
+      flex-shrink: 0;
+      z-index: 900;
+    }
+    .toolbar-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ft-grey-600);
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      white-space: nowrap;
+    }
+    .indicator-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .ind-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border: 1.5px solid var(--ft-grey-400);
+      border-radius: 20px;
+      background: var(--ft-white);
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--ft-grey-800);
+      transition: all .15s ease;
+      white-space: nowrap;
+    }
+    .ind-btn:hover {
+      border-color: var(--ft-blue);
+      color: var(--ft-blue);
+      background: var(--ft-blue-light);
+    }
+    .ind-btn.active {
+      border-color: var(--ft-blue);
+      background: var(--ft-blue);
+      color: var(--ft-white);
+    }
+    .ind-btn .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: .7;
+    }
+    .ind-btn.active .dot { opacity: 1; background: rgba(255,255,255,.8); }
+
+    .toolbar-spacer { flex: 1; }
+    .stat-chip {
+      background: var(--ft-grey-100);
+      border: 1px solid var(--ft-grey-200);
+      border-radius: 8px;
+      padding: 4px 12px;
+      font-size: 11px;
+      color: var(--ft-grey-600);
+      white-space: nowrap;
+    }
+    .stat-chip strong { color: var(--ft-blue); }
+
+    /* ── Layout ── */
+    .main {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ── Map ── */
+    #map {
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      background: var(--ft-white);
+      border-left: 1px solid var(--ft-grey-200);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: width .3s ease;
+    }
+    .sidebar.collapsed { width: 0; }
+
+    .sidebar-header {
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid var(--ft-grey-200);
+      background: var(--ft-blue-light);
+      flex-shrink: 0;
+    }
+    .sidebar-header h3 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ft-blue);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    .sidebar-clpe-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--ft-grey-800);
+      margin-top: 4px;
+    }
+    .sidebar-meta {
+      font-size: 11px;
+      color: var(--ft-grey-600);
+      margin-top: 2px;
+    }
+    .sidebar-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 28px;
+      height: 28px;
+      background: var(--ft-white);
+      border: 1px solid var(--ft-grey-400);
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--ft-grey-600);
+      transition: all .15s;
+    }
+    .sidebar-close:hover {
+      background: var(--ft-blue);
+      color: var(--ft-white);
+      border-color: var(--ft-blue);
+    }
+    .sidebar-header { position: relative; }
+
+    .sidebar-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--ft-grey-400);
+      padding: 40px;
+      text-align: center;
+    }
+    .sidebar-empty svg { width: 48px; height: 48px; opacity: .4; }
+    .sidebar-empty p { font-size: 13px; }
+
+    /* Table inside sidebar */
+    .table-wrap {
+      flex: 1;
+      overflow: auto;
+      padding: 0;
+    }
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    table.data-table thead th {
+      position: sticky;
+      top: 0;
+      background: var(--ft-grey-100);
+      border-bottom: 2px solid var(--ft-grey-200);
+      padding: 8px 12px;
+      font-weight: 700;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--ft-grey-600);
+      white-space: nowrap;
+      z-index: 1;
+      cursor: pointer;
+      user-select: none;
+    }
+    table.data-table thead th:hover { background: var(--ft-grey-200); color: var(--ft-blue); }
+    table.data-table thead th.sorted-asc::after { content: ' ↑'; }
+    table.data-table thead th.sorted-desc::after { content: ' ↓'; }
+    table.data-table tbody tr {
+      border-bottom: 1px solid var(--ft-grey-200);
+      cursor: pointer;
+      transition: background .1s;
+    }
+    table.data-table tbody tr:hover { background: var(--ft-blue-light); }
+    table.data-table tbody tr.selected-row { background: #FFF3EE; border-left: 3px solid var(--ft-orange); }
+    table.data-table tbody tr.nearby-row { background: #FFFBF0; }
+    table.data-table tbody td {
+      padding: 7px 12px;
+      vertical-align: middle;
+    }
+    table.data-table tbody td.num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      font-size: 11.5px;
+    }
+    .delta-pos { color: #1A7F4B; font-weight: 600; }
+    .delta-neg { color: #C0392B; font-weight: 600; }
+
+    /* ── Legend ── */
+    .map-legend {
+      position: absolute;
+      bottom: 30px;
+      left: 20px;
+      background: var(--ft-white);
+      border: 1px solid var(--ft-grey-200);
+      border-radius: 10px;
+      padding: 12px 16px;
+      z-index: 800;
+      box-shadow: 0 2px 12px rgba(0,0,0,.12);
+      min-width: 200px;
+    }
+    .legend-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ft-grey-600);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 8px;
+    }
+    .legend-scale {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .legend-swatch {
+      width: 18px;
+      height: 12px;
+      border-radius: 3px;
+      border: 1px solid rgba(0,0,0,.1);
+      flex-shrink: 0;
+    }
+    .legend-label { font-size: 11px; color: var(--ft-grey-800); }
+    .legend-nearby {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--ft-grey-200);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .legend-swatch-nearby {
+      width: 18px;
+      height: 12px;
+      border-radius: 3px;
+      background: rgba(229,90,40,.3);
+      border: 1.5px solid #E55A28;
+      flex-shrink: 0;
+    }
+
+    /* ── Tooltip ── */
+    .leaflet-tooltip.clpe-tip {
+      background: var(--ft-white);
+      border: 1px solid var(--ft-grey-200);
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,.18);
+      padding: 12px 16px;
+      max-width: 300px;
+      pointer-events: none;
+    }
+    .tip-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ft-blue);
+      margin-bottom: 8px;
+      border-bottom: 1px solid var(--ft-grey-200);
+      padding-bottom: 6px;
+    }
+    .tip-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 16px;
+    }
+    .tip-item {}
+    .tip-item .tip-lbl {
+      font-size: 9.5px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--ft-grey-600);
+      font-weight: 700;
+    }
+    .tip-item .tip-val {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ft-grey-800);
+    }
+    .tip-item .tip-sub {
+      font-size: 10px;
+      color: var(--ft-grey-600);
+    }
+    .tip-delta-pos { color: #1A7F4B; }
+    .tip-delta-neg { color: #C0392B; }
+
+    /* scrollbar */
+    .table-wrap::-webkit-scrollbar { width: 6px; }
+    .table-wrap::-webkit-scrollbar-track { background: transparent; }
+    .table-wrap::-webkit-scrollbar-thumb { background: var(--ft-grey-400); border-radius: 3px; }
+
+    /* Loading overlay */
+    #loading {
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,.92);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      gap: 16px;
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid var(--ft-grey-200);
+      border-top-color: var(--ft-blue);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loading p { font-size: 14px; color: var(--ft-grey-600); font-weight: 500; }
+  </style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+    <div style="width:36px;height:36px;background:var(--ft-blue);border-radius:8px;display:flex;align-items:center;justify-content:center">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" width="20" height="20"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+    </div>
+    <span style="font-weight:700;font-size:18px;color:var(--ft-blue)">Carte des CLPE</span>
+  </div>
+  <div class="spinner"></div>
+  <p>Chargement des données géographiques…</p>
+</div>
+
+<!-- Header -->
+<header>
+  <div class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="40" height="40" rx="8" fill="white"/>
+        <path d="M8 20C8 13.37 13.37 8 20 8s12 5.37 12 12-5.37 12-12 12S8 26.63 8 20z" fill="#005EB8"/>
+        <path d="M15 20l3.5 3.5L25 16.5" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="logo-text">
+      <span>Réseau Pour l'Emploi</span>
+      <span>France Travail</span>
+    </div>
+  </div>
+  <div class="header-sep"></div>
+  <div class="header-title">Carte des Comités Locaux Pour l'Emploi</div>
+  <div class="header-badge">Beta</div>
+</header>
+
+<!-- Toolbar -->
+<div class="toolbar">
+  <span class="toolbar-label">Indicateur&nbsp;:</span>
+  <div class="indicator-group" id="ind-group">
+    <button class="ind-btn active" data-ind="TX_ACCESM6">
+      <span class="dot"></span>Taux d'accès à l'emploi (TAE)
+    </button>
+    <button class="ind-btn" data-ind="TX_PRESEMPM6">
+      <span class="dot"></span>Taux de présence en emploi (TPE)
+    </button>
+    <button class="ind-btn" data-ind="DELTA_TX_ACCESM6">
+      <span class="dot"></span>Écart TAE
+    </button>
+    <button class="ind-btn" data-ind="DELTA_TX_PRESEMPM6">
+      <span class="dot"></span>Écart TPE
+    </button>
+  </div>
+  <div class="toolbar-spacer"></div>
+  <div class="stat-chip" id="stat-chip">— CLPE chargés</div>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <div id="map"></div>
+
+  <!-- Sidebar -->
+  <div class="sidebar collapsed" id="sidebar">
+    <div class="sidebar-header" id="sidebar-header">
+      <div class="sidebar-close" id="sidebar-close" title="Fermer">×</div>
+      <h3>Comité Local Pour l'Emploi</h3>
+      <div class="sidebar-clpe-name" id="sb-name">—</div>
+      <div class="sidebar-meta" id="sb-meta">—</div>
+    </div>
+    <div id="sidebar-content" class="table-wrap">
+      <div class="sidebar-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 16l4.553-2.276A1 1 0 0021 19.382V8.618a1 1 0 00-1.447-.894L15 10m0 13V10M9 7l6-3"/></svg>
+        <p>Cliquez sur un CLPE pour afficher les données détaillées et les territoires proches.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Legend -->
+<div class="map-legend" id="map-legend">
+  <div class="legend-title" id="legend-title">Taux d'accès à l'emploi</div>
+  <div class="legend-scale" id="legend-scale"></div>
+  <div class="legend-nearby" id="legend-nearby" style="display:none">
+    <div class="legend-swatch-nearby"></div>
+    <span class="legend-label">Territoires proches sélectionnés</span>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════ */
+let currentIndicator = 'TX_ACCESM6';
+let selectedId = null;
+let nearbyIds = new Set();
+let clpeLayer, deptLayer, regLayer;
+let clpeData = {};   // keyed by C_TERRITOIRE_ID
+let nameIndex = {};  // normalized label → C_TERRITOIRE_ID
+let sortCol = null, sortDir = 1;
+
+const INDICATORS = {
+  TX_ACCESM6:        { label: "Taux d'accès à l'emploi à 6 mois (TAE)",       unit: '%', fmt: v => v.toFixed(2) + ' %' },
+  TX_PRESEMPM6:      { label: "Taux de présence en emploi à 6 mois (TPE)",     unit: '%', fmt: v => v.toFixed(2) + ' %' },
+  TX_ACCESM6_D:      { label: "Moyenne relative des TAE (territoires proches)", unit: '%', fmt: v => v.toFixed(2) + ' %' },
+  TX_PRESEMPM6_D:    { label: "Moyenne relative des TPE (territoires proches)", unit: '%', fmt: v => v.toFixed(2) + ' %' },
+  DELTA_TX_ACCESM6:  { label: "Écart à la moyenne du TAE",                     unit: 'pp', fmt: v => (v > 0 ? '+' : '') + v.toFixed(2) + ' pp' },
+  DELTA_TX_PRESEMPM6:{ label: "Écart à la moyenne du TPE",                     unit: 'pp', fmt: v => (v > 0 ? '+' : '') + v.toFixed(2) + ' pp' },
+};
+
+const ALL_DISPLAY_COLS = [
+  { key: 'C_LBLTERRITOIRE',    label: 'CLPE' },
+  { key: 'C_LBLDEPARTEMENT',   label: 'Département' },
+  { key: 'C_LBLREGION',        label: 'Région' },
+  { key: 'TX_ACCESM6',         label: 'TAE (%)' },
+  { key: 'TX_PRESEMPM6',       label: 'TPE (%)' },
+  { key: 'TX_ACCESM6_D',       label: 'Moy. TAE proches (%)' },
+  { key: 'TX_PRESEMPM6_D',     label: 'Moy. TPE proches (%)' },
+  { key: 'DELTA_TX_ACCESM6',   label: 'Δ TAE (pp)' },
+  { key: 'DELTA_TX_PRESEMPM6', label: 'Δ TPE (pp)' },
+];
+
+const RAMP = ['#EAF4FB','#B0D6EF','#71B3DC','#328FC8','#005EB8'];
+
+/* ══════════════════════════════════════════════
+   MAP INIT
+══════════════════════════════════════════════ */
+const map = L.map('map', {
+  center: [46.5, 2.5],
+  zoom: 6,
+  zoomControl: true,
+});
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OSM contributors',
+  maxZoom: 18,
+}).addTo(map);
+
+/* ══════════════════════════════════════════════
+   COLOUR SCALE
+══════════════════════════════════════════════ */
+function computeBreaks(values) {
+  const sorted = [...values].filter(v => v !== null && !isNaN(v)).sort((a,b)=>a-b);
+  if (!sorted.length) return [0,0,0,0,0,0];
+  const n = sorted.length;
+  return [
+    sorted[0],
+    sorted[Math.floor(n * .20)],
+    sorted[Math.floor(n * .40)],
+    sorted[Math.floor(n * .60)],
+    sorted[Math.floor(n * .80)],
+    sorted[n-1]
+  ];
+}
+
+let breaks = [];
+function colorFor(val) {
+  if (val === null || val === undefined || isNaN(val)) return '#CCCCCC';
+  for (let i = RAMP.length - 1; i >= 0; i--) {
+    if (val >= breaks[i]) return RAMP[i];
+  }
+  return RAMP[0];
+}
+
+/* ══════════════════════════════════════════════
+   NORMALIZE NAME FOR JOIN
+══════════════════════════════════════════════ */
+function normName(s) {
+  if (!s) return '';
+  return s.toUpperCase().trim()
+    .replace(/\u2019/g, "'").replace(/\u2018/g, "'")
+    .replace(/\u2013|\u2014/g, '-');
+}
+
+/* ══════════════════════════════════════════════
+   CSV PARSER
+══════════════════════════════════════════════ */
+function parseCSV(text) {
+  // Strip BOM if present
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  const headers = lines[0].split(';').map(h => h.trim());
+  const numericCols = new Set([
+    'TX_ACCESM6','TX_PRESEMPM6','TX_ACCESM6_D','TX_PRESEMPM6_D',
+    'DELTA_TX_ACCESM6','DELTA_TX_PRESEMPM6'
+  ]);
+  return lines.slice(1).map(line => {
+    const vals = line.split(';');
+    const row = {};
+    headers.forEach((h, i) => {
+      const v = (vals[i] || '').trim();
+      if (numericCols.has(h)) {
+        // Handle both '.' and ',' as decimal separator
+        const num = parseFloat(v.replace(',', '.'));
+        // Convert 0–1 ratios to percentages if needed
+        row[h] = !isNaN(num) ? (Math.abs(num) <= 1 ? +(num * 100).toFixed(4) : +num.toFixed(4)) : null;
+      } else {
+        row[h] = v;
+      }
+    });
+    return row;
+  });
+}
+
+/* ══════════════════════════════════════════════
+   LOAD DATA
+══════════════════════════════════════════════ */
+async function loadAll() {
+  const [clpeGeo, deptGeo, regGeo, csvText] = await Promise.all([
+    fetch('clpe.geojson').then(r => r.json()),
+    fetch('departement.geojson').then(r => r.json()),
+    fetch('region.geojson').then(r => r.json()),
+    fetch('CLPE_TAE_TPE.csv').then(r => r.text()),
+  ]);
+
+  const csvData = parseCSV(csvText);
+
+  // Build data index
+  csvData.forEach(row => {
+    clpeData[row.C_TERRITOIRE_ID] = row;
+    nameIndex[normName(row.C_LBLTERRITOIRE)] = row.C_TERRITOIRE_ID;
+  });
+
+  // Add IDs to GeoJSON features
+  clpeGeo.features.forEach(f => {
+    const lbl = f.properties['Libellé Comité Local Pour l-Emploi'];
+    const id = nameIndex[normName(lbl)];
+    f.properties._id = id || null;
+  });
+
+  // Compute initial breaks
+  const allVals = Object.values(clpeData).map(d => d[currentIndicator]);
+  breaks = computeBreaks(allVals);
+
+  // Région layer
+  regLayer = L.geoJSON(regGeo, {
+    style: {
+      weight: 1.8,
+      color: '#005EB8',
+      fillColor: 'transparent',
+      fillOpacity: 0,
+      dashArray: null,
+    },
+    interactive: false,
+  }).addTo(map);
+
+  // Département layer
+  deptLayer = L.geoJSON(deptGeo, {
+    style: {
+      weight: 0.8,
+      color: '#6495C8',
+      fillColor: 'transparent',
+      fillOpacity: 0,
+      dashArray: '3 3',
+    },
+    interactive: false,
+  }).addTo(map);
+
+  // CLPE layer
+  clpeLayer = L.geoJSON(clpeGeo, {
+    style: feature => styleFeature(feature),
+    onEachFeature: bindFeature,
+  }).addTo(map);
+
+  updateLegend();
+  document.getElementById('stat-chip').innerHTML =
+    `<strong>${Object.keys(clpeData).length}</strong> CLPE chargés`;
+  document.getElementById('loading').style.display = 'none';
+}
+
+function styleFeature(f) {
+  const id = f.properties._id;
+  const data = id ? clpeData[id] : null;
+  const val = data ? data[currentIndicator] : null;
+  const fill = colorFor(val);
+
+  if (id && nearbyIds.has(id)) {
+    return { fillColor: '#E55A28', fillOpacity: .35, weight: 2, color: '#E55A28', opacity: .9 };
+  }
+  if (id && id === selectedId) {
+    return { fillColor: fill, fillOpacity: .85, weight: 3, color: '#E55A28', opacity: 1 };
+  }
+  return { fillColor: fill, fillOpacity: .75, weight: 0.4, color: '#FFFFFF', opacity: .6 };
+}
+
+function bindFeature(feature, layer) {
+  const id = feature.properties._id;
+  const data = id ? clpeData[id] : null;
+
+  // Tooltip
+  layer.bindTooltip(makeTooltip(feature, data), {
+    sticky: true,
+    className: 'clpe-tip',
+    opacity: 1,
+    offset: [12, -6],
+  });
+
+  layer.on('mouseover', function(e) {
+    if (id !== selectedId && !nearbyIds.has(id)) {
+      this.setStyle({ weight: 2, color: '#333', fillOpacity: .9 });
+    }
+    this.bringToFront();
+  });
+  layer.on('mouseout', function() {
+    clpeLayer.resetStyle(this);
+    applySelectionStyles();
+  });
+  layer.on('click', function() {
+    if (!data) return;
+    selectClpe(id, data);
+  });
+}
+
+function makeTooltip(feature, data) {
+  const name = feature.properties['Libellé Comité Local Pour l-Emploi'] || '—';
+  if (!data) return `<div class="tip-name">${name}</div><div style="font-size:11px;color:#999">Données non disponibles</div>`;
+
+  const fmtPct = v => `${v.toFixed(2)} %`;
+  const fmtDelta = v => `<span class="${v >= 0 ? 'tip-delta-pos' : 'tip-delta-neg'}">${v >= 0 ? '+' : ''}${v.toFixed(2)} pp</span>`;
+
+  return `
+    <div class="tip-name">${name}</div>
+    <div style="font-size:10px;color:#6B6B6B;margin-bottom:6px">${data.C_LBLDEPARTEMENT} – ${data.C_LBLREGION}</div>
+    <div class="tip-grid">
+      <div class="tip-item">
+        <div class="tip-lbl">TAE 6 mois</div>
+        <div class="tip-val">${fmtPct(data.TX_ACCESM6)}</div>
+        <div class="tip-sub">Moy. proches : ${fmtPct(data.TX_ACCESM6_D)}</div>
+      </div>
+      <div class="tip-item">
+        <div class="tip-lbl">TPE 6 mois</div>
+        <div class="tip-val">${fmtPct(data.TX_PRESEMPM6)}</div>
+        <div class="tip-sub">Moy. proches : ${fmtPct(data.TX_PRESEMPM6_D)}</div>
+      </div>
+      <div class="tip-item">
+        <div class="tip-lbl">Écart TAE</div>
+        <div class="tip-val" style="font-size:13px">${fmtDelta(data.DELTA_TX_ACCESM6)}</div>
+      </div>
+      <div class="tip-item">
+        <div class="tip-lbl">Écart TPE</div>
+        <div class="tip-val" style="font-size:13px">${fmtDelta(data.DELTA_TX_PRESEMPM6)}</div>
+      </div>
+    </div>
+  `;
+}
+
+/* ══════════════════════════════════════════════
+   SELECTION
+══════════════════════════════════════════════ */
+function selectClpe(id, data) {
+  selectedId = id;
+  nearbyIds = new Set();
+
+  // Collect up to 10 nearby territory IDs
+  for (let i = 1; i <= 10; i++) {
+    const nb = data[`TERRITOIRE_PROCHE${i}`];
+    if (nb && clpeData[nb]) nearbyIds.add(nb);
+  }
+
+  applySelectionStyles();
+  updateSidebar(id, data);
+  document.getElementById('legend-nearby').style.display = 'flex';
+}
+
+function applySelectionStyles() {
+  if (!clpeLayer) return;
+  clpeLayer.eachLayer(layer => {
+    const f = layer.feature;
+    const id = f.properties._id;
+    if (!id) return;
+    if (id === selectedId) {
+      const fill = colorFor(clpeData[id] ? clpeData[id][currentIndicator] : null);
+      layer.setStyle({ fillColor: fill, fillOpacity: .9, weight: 3, color: '#E55A28', opacity: 1 });
+      layer.bringToFront();
+    } else if (nearbyIds.has(id)) {
+      layer.setStyle({ fillColor: '#E55A28', fillOpacity: .30, weight: 2, color: '#E55A28', opacity: .85 });
+    } else {
+      const fill = colorFor(clpeData[id] ? clpeData[id][currentIndicator] : null);
+      layer.setStyle({ fillColor: fill, fillOpacity: .70, weight: 0.4, color: '#FFFFFF', opacity: .6 });
+    }
+  });
+  regLayer.bringToFront();
+}
+
+/* ══════════════════════════════════════════════
+   SIDEBAR / TABLE
+══════════════════════════════════════════════ */
+function updateSidebar(id, data) {
+  const sidebar = document.getElementById('sidebar');
+  sidebar.classList.remove('collapsed');
+  map.invalidateSize();
+
+  document.getElementById('sb-name').textContent = data.C_LBLTERRITOIRE;
+  document.getElementById('sb-meta').textContent = `${data.C_LBLDEPARTEMENT} · ${data.C_LBLREGION}`;
+
+  // Build full table: selected row first, then nearby, then others
+  const allRows = Object.values(clpeData);
+  const selectedRow = allRows.find(d => d.C_TERRITOIRE_ID === id);
+  const nearbyRows = allRows.filter(d => nearbyIds.has(d.C_TERRITOIRE_ID));
+  const otherRows  = allRows.filter(d => d.C_TERRITOIRE_ID !== id && !nearbyIds.has(d.C_TERRITOIRE_ID));
+
+  sortCol = null; sortDir = 1;
+  renderTable([selectedRow, ...nearbyRows, ...otherRows], id);
+}
+
+function renderTable(rows, selId) {
+  const wrap = document.getElementById('sidebar-content');
+  wrap.innerHTML = '';
+
+  const table = document.createElement('table');
+  table.className = 'data-table';
+
+  // Header
+  const thead = document.createElement('thead');
+  const tr = document.createElement('tr');
+  ALL_DISPLAY_COLS.forEach(col => {
+    const th = document.createElement('th');
+    th.textContent = col.label;
+    th.dataset.key = col.key;
+    if (sortCol === col.key) th.className = sortDir > 0 ? 'sorted-asc' : 'sorted-desc';
+    th.addEventListener('click', () => {
+      if (sortCol === col.key) sortDir *= -1;
+      else { sortCol = col.key; sortDir = 1; }
+      const sorted = [...rows].sort((a,b) => {
+        const av = a[sortCol], bv = b[sortCol];
+        if (typeof av === 'number') return (av - bv) * sortDir;
+        return String(av).localeCompare(String(bv)) * sortDir;
+      });
+      renderTable(sorted, selId);
+    });
+    tr.appendChild(th);
+  });
+  thead.appendChild(tr);
+  table.appendChild(thead);
+
+  // Body
+  const tbody = document.createElement('tbody');
+  rows.forEach(row => {
+    const tr = document.createElement('tr');
+    const isSelected = row.C_TERRITOIRE_ID === selId;
+    const isNearby   = nearbyIds.has(row.C_TERRITOIRE_ID);
+    if (isSelected) tr.className = 'selected-row';
+    else if (isNearby) tr.className = 'nearby-row';
+
+    tr.addEventListener('click', () => {
+      selectClpe(row.C_TERRITOIRE_ID, row);
+    });
+
+    ALL_DISPLAY_COLS.forEach(col => {
+      const td = document.createElement('td');
+      const v = row[col.key];
+      if (typeof v === 'number') {
+        td.className = 'num';
+        if (col.key.startsWith('DELTA_')) {
+          td.innerHTML = `<span class="${v >= 0 ? 'delta-pos' : 'delta-neg'}">${v >= 0 ? '+' : ''}${v.toFixed(2)}</span>`;
+        } else {
+          td.textContent = v.toFixed(2);
+        }
+      } else {
+        td.textContent = v || '—';
+        if (col.key === 'C_LBLTERRITOIRE' && isSelected) {
+          td.style.fontWeight = '700';
+        }
+      }
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+
+  // Scroll selected into view
+  const selectedTr = tbody.querySelector('.selected-row');
+  if (selectedTr) setTimeout(() => selectedTr.scrollIntoView({ block: 'start', behavior: 'smooth' }), 80);
+}
+
+function closeSidebar() {
+  document.getElementById('sidebar').classList.add('collapsed');
+  selectedId = null;
+  nearbyIds = new Set();
+  if (clpeLayer) clpeLayer.resetStyle();
+  document.getElementById('legend-nearby').style.display = 'none';
+  map.invalidateSize();
+}
+
+document.getElementById('sidebar-close').addEventListener('click', closeSidebar);
+
+/* ══════════════════════════════════════════════
+   LEGEND
+══════════════════════════════════════════════ */
+function updateLegend() {
+  const ind = INDICATORS[currentIndicator];
+  document.getElementById('legend-title').textContent = ind.label;
+
+  const allVals = Object.values(clpeData).map(d => d[currentIndicator]).filter(v => !isNaN(v));
+  breaks = computeBreaks(allVals);
+
+  const scale = document.getElementById('legend-scale');
+  scale.innerHTML = '';
+
+  const labels = [
+    `< ${breaks[1].toFixed(1)}`,
+    `${breaks[1].toFixed(1)} – ${breaks[2].toFixed(1)}`,
+    `${breaks[2].toFixed(1)} – ${breaks[3].toFixed(1)}`,
+    `${breaks[3].toFixed(1)} – ${breaks[4].toFixed(1)}`,
+    `≥ ${breaks[4].toFixed(1)}`,
+  ];
+
+  RAMP.forEach((color, i) => {
+    const row = document.createElement('div');
+    row.className = 'legend-row';
+    row.innerHTML = `<div class="legend-swatch" style="background:${color}"></div><span class="legend-label">${labels[i]}</span>`;
+    scale.appendChild(row);
+  });
+}
+
+/* ══════════════════════════════════════════════
+   INDICATOR SWITCH
+══════════════════════════════════════════════ */
+document.getElementById('ind-group').addEventListener('click', e => {
+  const btn = e.target.closest('.ind-btn');
+  if (!btn) return;
+  document.querySelectorAll('.ind-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentIndicator = btn.dataset.ind;
+
+  const allVals = Object.values(clpeData).map(d => d[currentIndicator]);
+  breaks = computeBreaks(allVals);
+
+  if (clpeLayer) {
+    clpeLayer.eachLayer(layer => {
+      const id = layer.feature.properties._id;
+      const data = id ? clpeData[id] : null;
+      const val = data ? data[currentIndicator] : null;
+      const fill = colorFor(val);
+      layer.setStyle({ fillColor: fill });
+    });
+    if (selectedId) applySelectionStyles();
+  }
+  updateLegend();
+});
+
+/* ══════════════════════════════════════════════
+   BOOT
+══════════════════════════════════════════════ */
+loadAll().catch(err => {
+  console.error(err);
+  document.getElementById('loading').innerHTML =
+    `<p style="color:#C0392B;font-weight:700">Erreur de chargement des données.<br><small>${err.message}</small></p>`;
+});
+</script>
+</body>
+</html>
