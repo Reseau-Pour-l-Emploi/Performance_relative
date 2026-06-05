@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Carte des Comités Locaux Pour l'Emploi</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>" />
 
   <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -287,30 +288,44 @@
     /* Table inside sidebar */
     .table-wrap {
       flex: 1;
-      overflow: auto;
+      overflow: hidden;
       padding: 0;
     }
     table.data-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 12px;
+      font-size: 9.5px;
+      table-layout: fixed;
     }
     table.data-table thead th {
       position: sticky;
       top: 0;
       background: var(--ft-grey-100);
       border-bottom: 2px solid var(--ft-grey-200);
-      padding: 8px 12px;
+      padding: 4px 4px;
       font-weight: 700;
-      font-size: 11px;
+      font-size: 8.5px;
       text-transform: uppercase;
-      letter-spacing: .05em;
+      letter-spacing: .04em;
       color: var(--ft-grey-600);
-      white-space: nowrap;
+      white-space: normal;
+      word-break: break-word;
+      line-height: 1.2;
+      vertical-align: bottom;
       z-index: 1;
       cursor: pointer;
       user-select: none;
     }
+    /* Column widths */
+    table.data-table th:nth-child(1) { width: 22%; }
+    table.data-table th:nth-child(2) { width: 11%; }
+    table.data-table th:nth-child(3) { width: 13%; }
+    table.data-table th:nth-child(4),
+    table.data-table th:nth-child(5),
+    table.data-table th:nth-child(6),
+    table.data-table th:nth-child(7) { width: 9%; }
+    table.data-table th:nth-child(8),
+    table.data-table th:nth-child(9) { width: 8.5%; }
     table.data-table thead th:hover { background: var(--ft-grey-200); color: var(--ft-blue); }
     table.data-table thead th.sorted-asc::after { content: ' ↑'; }
     table.data-table thead th.sorted-desc::after { content: ' ↓'; }
@@ -323,13 +338,15 @@
     table.data-table tbody tr.selected-row { background: #FFF3EE; border-left: 3px solid var(--ft-orange); }
     table.data-table tbody tr.nearby-row { background: #FFFBF0; }
     table.data-table tbody td {
-      padding: 7px 12px;
+      padding: 4px 4px;
       vertical-align: middle;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     table.data-table tbody td.num {
       text-align: right;
       font-variant-numeric: tabular-nums;
-      font-size: 11.5px;
     }
     .delta-pos { color: #1A7F4B; font-weight: 600; }
     .delta-neg { color: #C0392B; font-weight: 600; }
@@ -460,6 +477,158 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     #loading p { font-size: 14px; color: var(--ft-grey-600); font-weight: 500; }
+
+    /* ── Note de lecture ── */
+    .note-panel {
+      background: linear-gradient(135deg, #EEF5FF 0%, #E8F7F7 100%);
+      border-top: 2px solid var(--ft-grey-200);
+      padding: 10px 20px 12px;
+      flex-shrink: 0;
+    }
+    .note-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ft-blue-dark);
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .note-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+    .note-item {
+      background: white;
+      border: 1px solid var(--ft-grey-200);
+      border-left: 3px solid var(--ft-blue);
+      border-radius: 6px;
+      padding: 6px 9px;
+      font-size: 10px;
+      line-height: 1.4;
+    }
+    .note-item-title {
+      font-weight: 700;
+      color: var(--ft-grey-800);
+      margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .note-item-body { color: var(--ft-grey-600); }
+    .note-row2 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .note-attention {
+      background: #FFF8F0;
+      border: 1px solid #F5C8A8;
+      border-left: 3px solid var(--ft-orange);
+      border-radius: 6px;
+      padding: 6px 9px;
+      font-size: 10px;
+      color: var(--ft-grey-800);
+      display: flex;
+      gap: 6px;
+      align-items: flex-start;
+      line-height: 1.4;
+    }
+    .note-attention strong { color: var(--ft-orange); }
+
+
+    /* ── Infobulles définitions ── */
+    .has-def {
+      position: relative;
+      cursor: help;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .has-def::after {
+      content: '?';
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 13px;
+      height: 13px;
+      background: var(--ft-blue);
+      color: white;
+      border-radius: 50%;
+      font-size: 8px;
+      font-weight: 700;
+      flex-shrink: 0;
+      opacity: .7;
+      transition: opacity .15s;
+    }
+    .has-def:hover::after { opacity: 1; }
+    .def-tooltip {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      background: var(--ft-grey-800);
+      color: #fff;
+      border-radius: 8px;
+      padding: 10px 13px;
+      font-size: 11px;
+      line-height: 1.5;
+      max-width: 260px;
+      box-shadow: 0 4px 20px rgba(0,0,0,.3);
+      pointer-events: none;
+    }
+    .def-tooltip.visible { display: block; }
+    .def-tooltip strong {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 4px;
+      color: #7EC8F5;
+    }
+    /* in-toolbar: badge on buttons */
+    .ind-btn .def-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 13px;
+      height: 13px;
+      background: rgba(255,255,255,.25);
+      color: white;
+      border-radius: 50%;
+      font-size: 8px;
+      font-weight: 700;
+      margin-left: 2px;
+    }
+    .ind-btn:not(.active) .def-badge {
+      background: rgba(0,94,184,.18);
+      color: var(--ft-blue);
+    }
+    /* th tooltip anchor */
+    .th-inner {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      cursor: help;
+    }
+    .th-inner .qi {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 12px;
+      height: 12px;
+      background: var(--ft-blue);
+      color: white;
+      border-radius: 50%;
+      font-size: 7.5px;
+      font-weight: 700;
+      opacity: .65;
+      flex-shrink: 0;
+      transition: opacity .15s;
+    }
+    .th-inner:hover .qi { opacity: 1; }
+
   </style>
 </head>
 <body>
@@ -500,17 +669,17 @@
 <div class="toolbar">
   <span class="toolbar-label">Indicateur&nbsp;:</span>
   <div class="indicator-group" id="ind-group">
-    <button class="ind-btn active" data-ind="TX_ACCESM6">
-      <span class="dot"></span>Taux d'accès à l'emploi (TAE)
+    <button class="ind-btn active" data-ind="TX_ACCESM6" id="btn-TX_ACCESM6">
+      <span class="dot"></span>Taux d'accès à l'emploi (TAE)<span class="def-badge">?</span>
     </button>
-    <button class="ind-btn" data-ind="TX_PRESEMPM6">
-      <span class="dot"></span>Taux de présence en emploi (TPE)
+    <button class="ind-btn" data-ind="TX_PRESEMPM6" id="btn-TX_PRESEMPM6">
+      <span class="dot"></span>Taux de présence en emploi (TPE)<span class="def-badge">?</span>
     </button>
-    <button class="ind-btn" data-ind="DELTA_TX_ACCESM6">
-      <span class="dot"></span>Écart TAE
+    <button class="ind-btn" data-ind="DELTA_TX_ACCESM6" id="btn-DELTA_TX_ACCESM6">
+      <span class="dot"></span>Écart TAE<span class="def-badge">?</span>
     </button>
-    <button class="ind-btn" data-ind="DELTA_TX_PRESEMPM6">
-      <span class="dot"></span>Écart TPE
+    <button class="ind-btn" data-ind="DELTA_TX_PRESEMPM6" id="btn-DELTA_TX_PRESEMPM6">
+      <span class="dot"></span>Écart TPE<span class="def-badge">?</span>
     </button>
   </div>
   <div class="toolbar-spacer"></div>
@@ -581,6 +750,81 @@ const ALL_DISPLAY_COLS = [
   { key: 'DELTA_TX_PRESEMPM6', label: 'Δ TPE (pp)' },
 ];
 
+
+/* ══════════════════════════════════════════════
+   INDICATOR DEFINITIONS (infobulles)
+══════════════════════════════════════════════ */
+const DEFS = {
+  TX_ACCESM6: {
+    short: "TAE 6 mois",
+    full: "Part des demandeurs d'emploi entrés en accompagnement qui ont accédé à au moins un emploi (CDD ≥ 1 mois, CDI, intérim…) dans les 6 mois suivant leur entrée."
+  },
+  TX_PRESEMPM6: {
+    short: "TPE 6 mois",
+    full: "Part des demandeurs d'emploi entrés en accompagnement qui sont en emploi au bout de 6 mois, quelle que soit la nature du contrat."
+  },
+  TX_ACCESM6_D: {
+    short: "Moyenne TAE – proches",
+    full: "Moyenne du TAE calculée sur les 10 territoires les plus proches socio-économiquement. Sert de référence de comparaison contextualisée."
+  },
+  TX_PRESEMPM6_D: {
+    short: "Moyenne TPE – proches",
+    full: "Moyenne du TPE calculée sur les 10 territoires les plus proches socio-économiquement. Sert de référence de comparaison contextualisée."
+  },
+  DELTA_TX_ACCESM6: {
+    short: "Écart TAE (pp)",
+    full: "Différence entre le TAE du territoire et la moyenne de ses 10 voisins socio-économiques. Positif = territoire sur-performant par rapport à son contexte."
+  },
+  DELTA_TX_PRESEMPM6: {
+    short: "Écart TPE (pp)",
+    full: "Différence entre le TPE du territoire et la moyenne de ses 10 voisins socio-économiques. Positif = territoire sur-performant par rapport à son contexte."
+  },
+  C_LBLTERRITOIRE: {
+    short: "Nom du CLPE",
+    full: "Comité Local Pour l'Emploi — structure de gouvernance locale du Réseau Pour l'Emploi (RPE)."
+  },
+  C_LBLDEPARTEMENT: {
+    short: "Département",
+    full: "Département administratif auquel appartient le CLPE."
+  },
+  C_LBLREGION: {
+    short: "Région",
+    full: "Région administrative auquel appartient le CLPE."
+  },
+};
+
+/* ── Shared floating tooltip DOM ── */
+const defTooltipEl = document.createElement('div');
+defTooltipEl.className = 'def-tooltip';
+document.body.appendChild(defTooltipEl);
+
+function showDef(key, x, y) {
+  const d = DEFS[key];
+  if (!d) return;
+  defTooltipEl.innerHTML = `<strong>${d.short}</strong>${d.full}`;
+  defTooltipEl.classList.add('visible');
+  positionDef(x, y);
+}
+function positionDef(x, y) {
+  const pad = 12;
+  const w = defTooltipEl.offsetWidth || 260;
+  const h = defTooltipEl.offsetHeight || 80;
+  let left = x + pad;
+  let top  = y - h / 2;
+  if (left + w > window.innerWidth - 8) left = x - w - pad;
+  if (top < 4) top = 4;
+  if (top + h > window.innerHeight - 4) top = window.innerHeight - h - 4;
+  defTooltipEl.style.left = left + 'px';
+  defTooltipEl.style.top  = top  + 'px';
+}
+function hideDef() { defTooltipEl.classList.remove('visible'); }
+
+function attachDef(el, key) {
+  el.addEventListener('mouseenter', e => showDef(key, e.clientX, e.clientY));
+  el.addEventListener('mousemove',  e => positionDef(e.clientX, e.clientY));
+  el.addEventListener('mouseleave', hideDef);
+}
+
 const RAMP = ['#EAF4FB','#B0D6EF','#71B3DC','#328FC8','#005EB8'];
 
 /* ══════════════════════════════════════════════
@@ -589,7 +833,14 @@ const RAMP = ['#EAF4FB','#B0D6EF','#71B3DC','#328FC8','#005EB8'];
 const map = L.map('map', {
   center: [46.5, 2.5],
   zoom: 6,
-  zoomControl: true,
+  zoomControl: false,
+  dragging: false,
+  scrollWheelZoom: false,
+  doubleClickZoom: false,
+  touchZoom: false,
+  keyboard: false,
+  boxZoom: false,
+  maxBounds: [[-5, -10], [55, 15]],
 });
 
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
@@ -694,6 +945,7 @@ async function loadAll() {
   breaks = computeBreaks(allVals);
 
   // Région layer
+  regGeo.features = regGeo.features.filter(metroFilter);
   regLayer = L.geoJSON(regGeo, {
     style: {
       weight: 1.8,
@@ -706,6 +958,7 @@ async function loadAll() {
   }).addTo(map);
 
   // Département layer
+  deptGeo.features = deptGeo.features.filter(metroFilter);
   deptLayer = L.geoJSON(deptGeo, {
     style: {
       weight: 0.8,
@@ -718,6 +971,17 @@ async function loadAll() {
   }).addTo(map);
 
   // CLPE layer
+  // Filter to metropolitan France only
+  const metroFilter = feat => {
+    if (!feat.geometry || !feat.geometry.coordinates) return false;
+    const coords = feat.geometry.type === 'Polygon'
+      ? feat.geometry.coordinates[0]
+      : feat.geometry.coordinates[0][0];
+    if (!coords || !coords[0]) return false;
+    const [lon, lat] = coords[0];
+    return lat >= 41.0 && lat <= 51.5 && lon >= -5.5 && lon <= 9.6;
+  };
+  clpeGeo.features = clpeGeo.features.filter(metroFilter);
   clpeLayer = L.geoJSON(clpeGeo, {
     style: feature => styleFeature(feature),
     onEachFeature: bindFeature,
@@ -876,9 +1140,22 @@ function renderTable(rows, selId) {
   const tr = document.createElement('tr');
   ALL_DISPLAY_COLS.forEach(col => {
     const th = document.createElement('th');
-    th.textContent = col.label;
     th.dataset.key = col.key;
     if (sortCol === col.key) th.className = sortDir > 0 ? 'sorted-asc' : 'sorted-desc';
+
+    // Inner wrapper: label + ? badge
+    const inner = document.createElement('span');
+    inner.className = 'th-inner';
+    inner.textContent = col.label;
+    if (DEFS[col.key]) {
+      const qi = document.createElement('span');
+      qi.className = 'qi';
+      qi.textContent = '?';
+      inner.appendChild(qi);
+      attachDef(inner, col.key);
+    }
+    th.appendChild(inner);
+
     th.addEventListener('click', () => {
       if (sortCol === col.key) sortDir *= -1;
       else { sortCol = col.key; sortDir = 1; }
@@ -978,6 +1255,18 @@ function updateLegend() {
 /* ══════════════════════════════════════════════
    INDICATOR SWITCH
 ══════════════════════════════════════════════ */
+['TX_ACCESM6','TX_PRESEMPM6','DELTA_TX_ACCESM6','DELTA_TX_PRESEMPM6'].forEach(key => {
+  const btn = document.getElementById('btn-' + key);
+  if (btn) {
+    const badge = btn.querySelector('.def-badge');
+    if (badge) {
+      badge.addEventListener('mouseenter', e => { e.stopPropagation(); showDef(key, e.clientX, e.clientY); });
+      badge.addEventListener('mousemove',  e => { e.stopPropagation(); positionDef(e.clientX, e.clientY); });
+      badge.addEventListener('mouseleave', hideDef);
+    }
+  }
+});
+
 document.getElementById('ind-group').addEventListener('click', e => {
   const btn = e.target.closest('.ind-btn');
   if (!btn) return;
@@ -1010,5 +1299,47 @@ loadAll().catch(err => {
     `<p style="color:#C0392B;font-weight:700">Erreur de chargement des données.<br><small>${err.message}</small></p>`;
 });
 </script>
+
+<!-- Note de lecture -->
+<div class="note-panel">
+  <div class="note-title">🗺️ Territoires les plus proches — Approche socio-économique</div>
+  <div class="note-grid">
+    <div class="note-item">
+      <div class="note-item-title">🎯 Objectif</div>
+      <div class="note-item-body">Comparer des territoires par leurs similitudes socio-économiques, et non par leur proximité géographique.</div>
+    </div>
+    <div class="note-item">
+      <div class="note-item-title">❓ Pourquoi ?</div>
+      <div class="note-item-body">Les résultats d'un territoire (ex : taux d'emploi) dépendent de son contexte (âge de la population, secteurs d'activité…).</div>
+    </div>
+    <div class="note-item">
+      <div class="note-item-title">📊 Données</div>
+      <div class="note-item-body">211 indicateurs socio-économiques (démographie, entreprises, chômage…) décrivent chaque territoire.</div>
+    </div>
+    <div class="note-item">
+      <div class="note-item-title">🔬 Modèle</div>
+      <div class="note-item-body">Une régression <em>ridge</em> prédit les performances d'un territoire selon son contexte socio-économique.</div>
+    </div>
+  </div>
+  <div class="note-row2">
+    <div class="note-item">
+      <div class="note-item-title">📐 Distance</div>
+      <div class="note-item-body">Une « distance » est calculée en comparant les caractéristiques et les performances prédites de chaque CLPE.</div>
+    </div>
+    <div class="note-item">
+      <div class="note-item-title">📋 Résultats</div>
+      <div class="note-item-body"><strong>Top 10 voisins</strong> par territoire · <strong>Groupes</strong> de territoires similaires pour analyses globales.</div>
+    </div>
+    <div class="note-item">
+      <div class="note-item-title">💡 Exemple</div>
+      <div class="note-item-body">Deux CLPE aux profils socio-économiques proches sont comparables, même s'ils sont éloignés géographiquement.</div>
+    </div>
+    <div class="note-attention">
+      <span>⚠️</span>
+      <div><strong>Non-commutativité :</strong> la proximité n'est pas réciproque. Le CLPE A peut être proche du CLPE B, sans que B soit proche de A. Utile pour évaluer des politiques publiques en comparant des territoires similaires.</div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
