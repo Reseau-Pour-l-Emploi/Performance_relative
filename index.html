@@ -124,6 +124,124 @@
       text-transform: uppercase;
       letter-spacing: .05em;
     }
+    .header-methodo-btn {
+      background: rgba(255,255,255,.15);
+      border: 1.5px solid rgba(255,255,255,.4);
+      color: var(--ft-white);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 13px;
+      border-radius: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background .15s, border-color .15s;
+      white-space: nowrap;
+    }
+    .header-methodo-btn:hover {
+      background: rgba(255,255,255,.28);
+      border-color: rgba(255,255,255,.7);
+    }
+    .header-methodo-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+    /* Popup méthodologie */
+    .methodo-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 9000;
+      align-items: center;
+      justify-content: center;
+    }
+    .methodo-overlay.open { display: flex; }
+    .methodo-modal {
+      background: var(--ft-white);
+      border-radius: 14px;
+      width: min(820px, 94vw);
+      max-height: 88vh;
+      overflow-y: auto;
+      box-shadow: 0 12px 48px rgba(0,0,0,.3);
+      animation: modalIn .18s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(16px) scale(.97); }
+      to   { opacity: 1; transform: none; }
+    }
+    .methodo-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 24px 14px;
+      border-bottom: 1px solid var(--ft-grey-200);
+      background: linear-gradient(135deg, #EEF5FF 0%, #E8F7F7 100%);
+      border-radius: 14px 14px 0 0;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    .methodo-modal-header h2 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--ft-blue-dark);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .methodo-modal-close {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 1px solid var(--ft-grey-400);
+      background: var(--ft-white);
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--ft-grey-600);
+      transition: all .15s;
+    }
+    .methodo-modal-close:hover { background: var(--ft-blue); color: white; border-color: var(--ft-blue); }
+    .methodo-modal-body { padding: 20px 24px 24px; }
+    .methodo-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .methodo-item {
+      background: var(--ft-grey-100);
+      border: 1px solid var(--ft-grey-200);
+      border-left: 3px solid var(--ft-blue);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+    .methodo-item-title {
+      font-weight: 700;
+      color: var(--ft-grey-800);
+      margin-bottom: 4px;
+    }
+    .methodo-item-body { color: var(--ft-grey-600); }
+    .methodo-attention {
+      background: #FFF8F0;
+      border: 1px solid #F5C8A8;
+      border-left: 3px solid var(--ft-orange);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 11px;
+      color: var(--ft-grey-800);
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      line-height: 1.5;
+      margin-top: 10px;
+    }
+    .methodo-attention strong { color: var(--ft-orange); }
 
     /* ── Toolbar ── */
     .toolbar {
@@ -711,6 +829,12 @@
   </div>
   <div class="header-sep"></div>
   <div class="header-title">Carte des Comités Locaux Pour l'Emploi</div>
+  <button class="header-methodo-btn" id="methodo-btn">
+    <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8">
+      <circle cx="7" cy="7" r="6"/><line x1="7" y1="6" x2="7" y2="10"/><circle cx="7" cy="4" r=".6" fill="currentColor" stroke="none"/>
+    </svg>
+    Méthodologie
+  </button>
   <div class="header-badge">Beta</div>
 </header>
 
@@ -771,6 +895,52 @@
   </svg>
   Légende
 </button>
+
+<!-- Popup Méthodologie -->
+<div class="methodo-overlay" id="methodo-overlay">
+  <div class="methodo-modal">
+    <div class="methodo-modal-header">
+      <h2>🗺️ Territoires les plus proches — Approche socio-économique</h2>
+      <button class="methodo-modal-close" id="methodo-close">×</button>
+    </div>
+    <div class="methodo-modal-body">
+      <div class="methodo-grid">
+        <div class="methodo-item">
+          <div class="methodo-item-title">🎯 Objectif</div>
+          <div class="methodo-item-body">Comparer des territoires par leurs similitudes socio-économiques, et non par leur proximité géographique.</div>
+        </div>
+        <div class="methodo-item">
+          <div class="methodo-item-title">❓ Pourquoi ?</div>
+          <div class="methodo-item-body">Les résultats d'un territoire (ex : taux d'emploi) dépendent de son contexte (âge de la population, secteurs d'activité…).</div>
+        </div>
+        <div class="methodo-item">
+          <div class="methodo-item-title">📊 Données</div>
+          <div class="methodo-item-body">211 indicateurs socio-économiques (démographie, entreprises, chômage…) décrivent chaque territoire.</div>
+        </div>
+        <div class="methodo-item">
+          <div class="methodo-item-title">🔬 Modèle</div>
+          <div class="methodo-item-body">Une régression <em>ridge</em> prédit les performances d'un territoire selon son contexte socio-économique.</div>
+        </div>
+        <div class="methodo-item">
+          <div class="methodo-item-title">📐 Distance</div>
+          <div class="methodo-item-body">Une « distance » est calculée en comparant les caractéristiques et les performances prédites de chaque CLPE.</div>
+        </div>
+        <div class="methodo-item">
+          <div class="methodo-item-title">📋 Résultats</div>
+          <div class="methodo-item-body"><strong>Top 10 voisins</strong> par territoire · <strong>Groupes</strong> de territoires similaires pour analyses globales.</div>
+        </div>
+        <div class="methodo-item">
+          <div class="methodo-item-title">💡 Exemple</div>
+          <div class="methodo-item-body">Deux CLPE aux profils socio-économiques proches sont comparables, même s'ils sont éloignés géographiquement.</div>
+        </div>
+      </div>
+      <div class="methodo-attention">
+        <span>⚠️</span>
+        <div><strong>Non-commutativité :</strong> la proximité n'est pas réciproque. Le CLPE A peut être proche du CLPE B, sans que B soit proche de A. Utile pour évaluer des politiques publiques en comparant des territoires similaires.</div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
 let currentIndicator = 'TX_ACCESM6';
@@ -1278,7 +1448,9 @@ function renderTable(rows, selId) {
   table.appendChild(tbody);
   wrap.appendChild(table);
 
-  // Scroll selected into view
+  // Scroll en haut puis vers la ligne sélectionnée
+  const wrap = document.getElementById('sidebar-content');
+  wrap.scrollTop = 0;
   const selectedTr = tbody.querySelector('.selected-row');
   if (selectedTr) setTimeout(() => selectedTr.scrollIntoView({ block: 'start', behavior: 'smooth' }), 80);
 }
@@ -1364,6 +1536,19 @@ document.getElementById('ind-group').addEventListener('click', e => {
     if (selectedId) applySelectionStyles();
   }
   updateLegend();
+});
+
+/* ══════════════════════════════════════════════
+   POPUP MÉTHODOLOGIE
+══════════════════════════════════════════════ */
+document.getElementById('methodo-btn').addEventListener('click', () => {
+  document.getElementById('methodo-overlay').classList.add('open');
+});
+document.getElementById('methodo-close').addEventListener('click', () => {
+  document.getElementById('methodo-overlay').classList.remove('open');
+});
+document.getElementById('methodo-overlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
 });
 
 /* ══════════════════════════════════════════════
