@@ -41,7 +41,7 @@
       --hl-fill:   rgba(229,90,40,0.30);
       --hl-stroke: #E55A28;
 
-      --sidebar-w: 420px;
+      --sidebar-w: 520px;
       --header-h:  64px;
       --toolbar-h: 56px;
     }
@@ -208,6 +208,8 @@
     #map {
       flex: 1;
       min-width: 0;
+      order: 1;
+      position: relative;
     }
 
     /* ── Sidebar ── */
@@ -220,6 +222,7 @@
       flex-direction: column;
       overflow: hidden;
       transition: width .3s ease;
+      order: 2;
     }
     .sidebar.collapsed { width: 0; }
 
@@ -288,7 +291,7 @@
     /* Table inside sidebar */
     .table-wrap {
       flex: 1;
-      overflow: hidden;
+      overflow: auto;
       padding: 0;
     }
     table.data-table {
@@ -297,12 +300,15 @@
       font-size: 9.5px;
       table-layout: fixed;
     }
-    table.data-table thead th {
+    table.data-table thead {
       position: sticky;
       top: 0;
+      z-index: 3;
+    }
+    table.data-table thead th {
       background: var(--ft-grey-100);
       border-bottom: 2px solid var(--ft-grey-200);
-      padding: 4px 4px;
+      padding: 5px 4px;
       font-weight: 700;
       font-size: 8.5px;
       text-transform: uppercase;
@@ -310,11 +316,11 @@
       color: var(--ft-grey-600);
       white-space: normal;
       word-break: break-word;
-      line-height: 1.2;
+      line-height: 1.25;
       vertical-align: bottom;
-      z-index: 1;
       cursor: pointer;
       user-select: none;
+      overflow: hidden;
     }
     /* Column widths */
     table.data-table th:nth-child(1) { width: 22%; }
@@ -351,18 +357,19 @@
     .delta-pos { color: #1A7F4B; font-weight: 600; }
     .delta-neg { color: #C0392B; font-weight: 600; }
 
-    /* ── Legend ── */
+    /* ── Legend — incrustée sur la carte ── */
     .map-legend {
       position: absolute;
       bottom: 30px;
-      left: 20px;
-      background: var(--ft-white);
+      right: 12px;
+      background: rgba(255,255,255,0.92);
       border: 1px solid var(--ft-grey-200);
       border-radius: 10px;
-      padding: 12px 16px;
+      padding: 10px 14px;
       z-index: 800;
       box-shadow: 0 2px 12px rgba(0,0,0,.12);
-      min-width: 200px;
+      min-width: 170px;
+      backdrop-filter: blur(4px);
     }
     .legend-title {
       font-size: 11px;
@@ -688,7 +695,9 @@
 
 <!-- Main -->
 <div class="main">
-  <div id="map"></div>
+  <div id="map">
+  <!-- Legend sera déplacée dans le container Leaflet par JS -->
+  </div>
 
   <!-- Sidebar -->
   <div class="sidebar collapsed" id="sidebar">
@@ -706,9 +715,8 @@
     </div>
   </div>
 </div>
-
-<!-- Legend -->
-<div class="map-legend" id="map-legend">
+<!-- Legend — sera incrustée sur la carte par JS -->
+<div class="map-legend" id="map-legend" style="display:none">
   <div class="legend-title" id="legend-title">Taux d'accès à l'emploi</div>
   <div class="legend-scale" id="legend-scale"></div>
   <div class="legend-nearby" id="legend-nearby" style="display:none">
@@ -718,9 +726,6 @@
 </div>
 
 <script>
-/* ══════════════════════════════════════════════
-   STATE
-══════════════════════════════════════════════ */
 let currentIndicator = 'TX_ACCESM6';
 let selectedId = null;
 let nearbyIds = new Set();
@@ -757,11 +762,11 @@ const ALL_DISPLAY_COLS = [
 const DEFS = {
   TX_ACCESM6: {
     short: "TAE 6 mois",
-    full: "Part des demandeurs d'emploi entrés en accompagnement qui ont accédé à au moins un emploi (CDD ≥ 1 mois, CDI, intérim…) dans les 6 mois suivant leur entrée."
+    full: "Part des demandeurs d'emploi entrés en accompagnement qui ont accédé à au moins un emploi dans les 6 mois. L'accès à l'emploi est acquis dès lors que le cumul des heures travaillées dépasse 78h dans le mois (CDD ≥ 1 mois, CDI, intérim…)."
   },
   TX_PRESEMPM6: {
     short: "TPE 6 mois",
-    full: "Part des demandeurs d'emploi entrés en accompagnement qui sont en emploi au bout de 6 mois, quelle que soit la nature du contrat."
+    full: "Part des demandeurs d'emploi entrés en accompagnement qui sont en emploi au bout de 6 mois. La présence en emploi est acquise dès lors que le cumul des heures travaillées dépasse 78h dans le mois, quelle que soit la nature du contrat."
   },
   TX_ACCESM6_D: {
     short: "Moyenne TAE – proches",
@@ -842,6 +847,13 @@ const map = L.map('map', {
   boxZoom: false,
   maxBounds: [[-5, -10], [55, 15]],
 });
+
+// Incrustation de la légende sur la carte (après init Leaflet)
+{
+  const legendEl = document.getElementById('map-legend');
+  document.getElementById('map').appendChild(legendEl);
+  legendEl.style.display = '';
+}
 
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
   attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OSM contributors',
@@ -1006,7 +1018,7 @@ function styleFeature(f) {
   if (id && id === selectedId) {
     return { fillColor: fill, fillOpacity: .85, weight: 3, color: '#E55A28', opacity: 1 };
   }
-  return { fillColor: fill, fillOpacity: .75, weight: 0.4, color: '#FFFFFF', opacity: .6 };
+  return { fillColor: fill, fillOpacity: .75, weight: 1.2, color: '#E879A0', opacity: .85 };
 }
 
 function bindFeature(feature, layer) {
@@ -1022,6 +1034,14 @@ function bindFeature(feature, layer) {
   });
 
   layer.on('mouseover', function(e) {
+    // Fermer tous les autres tooltips ouverts
+    if (clpeLayer) {
+      clpeLayer.eachLayer(l => {
+        if (l !== this && l.isTooltipOpen && l.isTooltipOpen()) {
+          l.closeTooltip();
+        }
+      });
+    }
     if (id !== selectedId && !nearbyIds.has(id)) {
       this.setStyle({ weight: 2, color: '#333', fillOpacity: .9 });
     }
@@ -1102,7 +1122,7 @@ function applySelectionStyles() {
       layer.setStyle({ fillColor: '#E55A28', fillOpacity: .30, weight: 2, color: '#E55A28', opacity: .85 });
     } else {
       const fill = colorFor(clpeData[id] ? clpeData[id][currentIndicator] : null);
-      layer.setStyle({ fillColor: fill, fillOpacity: .70, weight: 0.4, color: '#FFFFFF', opacity: .6 });
+      layer.setStyle({ fillColor: fill, fillOpacity: .70, weight: 1.2, color: '#E879A0', opacity: .85 });
     }
   });
   regLayer.bringToFront();
