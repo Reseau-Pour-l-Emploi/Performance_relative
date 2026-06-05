@@ -41,7 +41,7 @@
       --hl-fill:   rgba(229,90,40,0.30);
       --hl-stroke: #E55A28;
 
-      --sidebar-w: 520px;
+      --sidebar-w: 50%;
       --header-h:  64px;
       --toolbar-h: 56px;
     }
@@ -206,8 +206,8 @@
 
     /* ── Map ── */
     #map {
-      flex: 1;
-      min-width: 0;
+      width: 50%;
+      flex-shrink: 0;
       order: 1;
       position: relative;
     }
@@ -221,10 +221,13 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      transition: width .3s ease;
       order: 2;
     }
-    .sidebar.collapsed { width: 0; }
+    /* Le sidebar ne se collapse plus - on masque juste le header de sélection */
+    .sidebar-header { display: flex; flex-direction: column; }
+    .sidebar-header.no-selection .sidebar-close { display: none; }
+    .sidebar-selection-info { display: contents; }
+    .sidebar-header.no-selection .sidebar-selection-info { display: none; }
 
     .sidebar-header {
       padding: 16px 20px 12px;
@@ -342,7 +345,11 @@
     }
     table.data-table tbody tr:hover { background: var(--ft-blue-light); }
     table.data-table tbody tr.selected-row { background: #FFF3EE; border-left: 3px solid var(--ft-orange); }
-    table.data-table tbody tr.nearby-row { background: #FFFBF0; }
+    table.data-table tbody tr.nearby-row {
+      background: #FDE8C8;
+      border-left: 3px solid #E5A028;
+    }
+    table.data-table tbody tr.nearby-row td { color: #7A3D00; font-weight: 500; }
     table.data-table tbody td {
       padding: 4px 4px;
       vertical-align: middle;
@@ -357,19 +364,54 @@
     .delta-pos { color: #1A7F4B; font-weight: 600; }
     .delta-neg { color: #C0392B; font-weight: 600; }
 
-    /* ── Legend — incrustée sur la carte ── */
-    .map-legend {
+    /* ── Bouton légende + popup ── */
+    .legend-btn {
       position: absolute;
-      bottom: 30px;
-      right: 12px;
-      background: rgba(255,255,255,0.92);
+      bottom: 20px;
+      left: 16px;
+      z-index: 900;
+      background: var(--ft-white);
+      border: 1.5px solid var(--ft-grey-400);
+      border-radius: 8px;
+      padding: 7px 13px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ft-grey-800);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.15);
+      transition: all .15s;
+    }
+    .legend-btn:hover {
+      border-color: var(--ft-blue);
+      color: var(--ft-blue);
+      background: var(--ft-blue-light);
+    }
+    .legend-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+    /* Popup légende */
+    .legend-popup {
+      position: absolute;
+      bottom: 58px;
+      left: 16px;
+      z-index: 901;
+      background: rgba(255,255,255,0.97);
       border: 1px solid var(--ft-grey-200);
-      border-radius: 10px;
-      padding: 10px 14px;
-      z-index: 800;
-      box-shadow: 0 2px 12px rgba(0,0,0,.12);
-      min-width: 170px;
-      backdrop-filter: blur(4px);
+      border-radius: 12px;
+      padding: 14px 16px;
+      box-shadow: 0 6px 24px rgba(0,0,0,.18);
+      min-width: 190px;
+      backdrop-filter: blur(6px);
+      display: none;
+      animation: legendFadeIn .15s ease;
+    }
+    .legend-popup.open { display: block; }
+    @keyframes legendFadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
     .legend-title {
       font-size: 11px;
@@ -697,26 +739,24 @@
 <div class="main">
   <div id="map">
   <!-- Legend sera déplacée dans le container Leaflet par JS -->
-  </div>
 
-  <!-- Sidebar -->
-  <div class="sidebar collapsed" id="sidebar">
-    <div class="sidebar-header" id="sidebar-header">
-      <div class="sidebar-close" id="sidebar-close" title="Fermer">×</div>
+  <!-- Sidebar — toujours visible -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header no-selection" id="sidebar-header">
+      <div class="sidebar-close" id="sidebar-close" title="Désélectionner">×</div>
       <h3>Comité Local Pour l'Emploi</h3>
-      <div class="sidebar-clpe-name" id="sb-name">—</div>
-      <div class="sidebar-meta" id="sb-meta">—</div>
+      <div class="sidebar-selection-info">
+        <div class="sidebar-clpe-name" id="sb-name">—</div>
+        <div class="sidebar-meta" id="sb-meta">—</div>
+      </div>
     </div>
     <div id="sidebar-content" class="table-wrap">
-      <div class="sidebar-empty">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 16l4.553-2.276A1 1 0 0021 19.382V8.618a1 1 0 00-1.447-.894L15 10m0 13V10M9 7l6-3"/></svg>
-        <p>Cliquez sur un CLPE pour afficher les données détaillées et les territoires proches.</p>
-      </div>
+      <!-- Table chargée par JS après boot -->
     </div>
   </div>
 </div>
-<!-- Legend — sera incrustée sur la carte par JS -->
-<div class="map-legend" id="map-legend" style="display:none">
+<!-- Legend — sera déplacée dans la carte par JS -->
+<div id="map-legend-popup" class="legend-popup">
   <div class="legend-title" id="legend-title">Taux d'accès à l'emploi</div>
   <div class="legend-scale" id="legend-scale"></div>
   <div class="legend-nearby" id="legend-nearby" style="display:none">
@@ -724,6 +764,13 @@
     <span class="legend-label">Territoires proches sélectionnés</span>
   </div>
 </div>
+<button id="legend-btn" class="legend-btn" title="Afficher la légende">
+  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
+    <rect x="1" y="3" width="4" height="3" rx="1"/><line x1="7" y1="4.5" x2="15" y2="4.5"/>
+    <rect x="1" y="9" width="4" height="3" rx="1"/><line x1="7" y1="10.5" x2="15" y2="10.5"/>
+  </svg>
+  Légende
+</button>
 
 <script>
 let currentIndicator = 'TX_ACCESM6';
@@ -848,12 +895,7 @@ const map = L.map('map', {
   maxBounds: [[-5, -10], [55, 15]],
 });
 
-// Incrustation de la légende sur la carte (après init Leaflet)
-{
-  const legendEl = document.getElementById('map-legend');
-  document.getElementById('map').appendChild(legendEl);
-  legendEl.style.display = '';
-}
+// Incrustation du bouton légende gérée après loadAll()
 
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
   attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OSM contributors',
@@ -1004,6 +1046,15 @@ async function loadAll() {
   document.getElementById('stat-chip').innerHTML =
     `<strong>${Object.keys(clpeData).length}</strong> CLPE chargés`;
   document.getElementById('loading').style.display = 'none';
+
+  // Afficher le tableau complet dès le boot (aucune sélection)
+  const allRows = Object.values(clpeData);
+  renderTable(allRows, null);
+
+  // Déplacer le bouton légende et la popup dans le div map
+  const mapEl = document.getElementById('map');
+  mapEl.appendChild(document.getElementById('map-legend-popup'));
+  mapEl.appendChild(document.getElementById('legend-btn'));
 }
 
 function styleFeature(f) {
@@ -1132,10 +1183,9 @@ function applySelectionStyles() {
    SIDEBAR / TABLE
 ══════════════════════════════════════════════ */
 function updateSidebar(id, data) {
-  const sidebar = document.getElementById('sidebar');
-  sidebar.classList.remove('collapsed');
-  map.invalidateSize();
-
+  // Mettre à jour l'en-tête de sélection
+  const header = document.getElementById('sidebar-header');
+  header.classList.remove('no-selection');
   document.getElementById('sb-name').textContent = data.C_LBLTERRITOIRE;
   document.getElementById('sb-meta').textContent = `${data.C_LBLDEPARTEMENT} · ${data.C_LBLREGION}`;
 
@@ -1234,12 +1284,17 @@ function renderTable(rows, selId) {
 }
 
 function closeSidebar() {
-  document.getElementById('sidebar').classList.add('collapsed');
   selectedId = null;
   nearbyIds = new Set();
-  if (clpeLayer) clpeLayer.resetStyle();
+  if (clpeLayer) clpeLayer.eachLayer(l => l.setStyle(styleFeature(l.feature)));
   document.getElementById('legend-nearby').style.display = 'none';
-  map.invalidateSize();
+  // Remettre l'en-tête en mode "aucune sélection"
+  const header = document.getElementById('sidebar-header');
+  header.classList.add('no-selection');
+  document.getElementById('sb-name').textContent = '—';
+  document.getElementById('sb-meta').textContent = '—';
+  // Réafficher tous les CLPE dans le tableau
+  renderTable(Object.values(clpeData), null);
 }
 
 document.getElementById('sidebar-close').addEventListener('click', closeSidebar);
@@ -1309,6 +1364,22 @@ document.getElementById('ind-group').addEventListener('click', e => {
     if (selectedId) applySelectionStyles();
   }
   updateLegend();
+});
+
+/* ══════════════════════════════════════════════
+   BOUTON LÉGENDE
+══════════════════════════════════════════════ */
+document.addEventListener('click', e => {
+  const btn = document.getElementById('legend-btn');
+  const popup = document.getElementById('map-legend-popup');
+  if (!btn || !popup) return;
+  if (btn.contains(e.target)) {
+    popup.classList.toggle('open');
+    return;
+  }
+  if (!popup.contains(e.target)) {
+    popup.classList.remove('open');
+  }
 });
 
 /* ══════════════════════════════════════════════
