@@ -1449,8 +1449,7 @@ function renderTable(rows, selId) {
   wrap.appendChild(table);
 
   // Scroll en haut puis vers la ligne sélectionnée
-  const wrap = document.getElementById('sidebar-content');
-  wrap.scrollTop = 0;
+  document.getElementById('sidebar-content').scrollTop = 0;
   const selectedTr = tbody.querySelector('.selected-row');
   if (selectedTr) setTimeout(() => selectedTr.scrollIntoView({ block: 'start', behavior: 'smooth' }), 80);
 }
