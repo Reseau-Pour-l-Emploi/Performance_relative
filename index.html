@@ -737,8 +737,7 @@
 
 <!-- Main -->
 <div class="main">
-  <div id="map">
-  <!-- Legend sera déplacée dans le container Leaflet par JS -->
+  <div id="map"><!-- Leaflet s'initialise ici --></div>
 
   <!-- Sidebar — toujours visible -->
   <div class="sidebar" id="sidebar">
@@ -755,7 +754,8 @@
     </div>
   </div>
 </div>
-<!-- Legend — sera déplacée dans la carte par JS -->
+
+<!-- Legend popup + bouton — déplacés dans le div#map par JS -->
 <div id="map-legend-popup" class="legend-popup">
   <div class="legend-title" id="legend-title">Taux d'accès à l'emploi</div>
   <div class="legend-scale" id="legend-scale"></div>
@@ -1392,46 +1392,6 @@ loadAll().catch(err => {
 });
 </script>
 
-<!-- Note de lecture -->
-<div class="note-panel">
-  <div class="note-title">🗺️ Territoires les plus proches — Approche socio-économique</div>
-  <div class="note-grid">
-    <div class="note-item">
-      <div class="note-item-title">🎯 Objectif</div>
-      <div class="note-item-body">Comparer des territoires par leurs similitudes socio-économiques, et non par leur proximité géographique.</div>
-    </div>
-    <div class="note-item">
-      <div class="note-item-title">❓ Pourquoi ?</div>
-      <div class="note-item-body">Les résultats d'un territoire (ex : taux d'emploi) dépendent de son contexte (âge de la population, secteurs d'activité…).</div>
-    </div>
-    <div class="note-item">
-      <div class="note-item-title">📊 Données</div>
-      <div class="note-item-body">211 indicateurs socio-économiques (démographie, entreprises, chômage…) décrivent chaque territoire.</div>
-    </div>
-    <div class="note-item">
-      <div class="note-item-title">🔬 Modèle</div>
-      <div class="note-item-body">Une régression <em>ridge</em> prédit les performances d'un territoire selon son contexte socio-économique.</div>
-    </div>
-  </div>
-  <div class="note-row2">
-    <div class="note-item">
-      <div class="note-item-title">📐 Distance</div>
-      <div class="note-item-body">Une « distance » est calculée en comparant les caractéristiques et les performances prédites de chaque CLPE.</div>
-    </div>
-    <div class="note-item">
-      <div class="note-item-title">📋 Résultats</div>
-      <div class="note-item-body"><strong>Top 10 voisins</strong> par territoire · <strong>Groupes</strong> de territoires similaires pour analyses globales.</div>
-    </div>
-    <div class="note-item">
-      <div class="note-item-title">💡 Exemple</div>
-      <div class="note-item-body">Deux CLPE aux profils socio-économiques proches sont comparables, même s'ils sont éloignés géographiquement.</div>
-    </div>
-    <div class="note-attention">
-      <span>⚠️</span>
-      <div><strong>Non-commutativité :</strong> la proximité n'est pas réciproque. Le CLPE A peut être proche du CLPE B, sans que B soit proche de A. Utile pour évaluer des politiques publiques en comparant des territoires similaires.</div>
-    </div>
-  </div>
-</div>
 
 </body>
 </html>
