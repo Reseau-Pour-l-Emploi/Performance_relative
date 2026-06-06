@@ -1,3 +1,5 @@
+<script data-goatcounter="https://denisft.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -646,6 +648,37 @@
     #loading p { font-size: 14px; color: var(--ft-grey-600); font-weight: 500; }
 
     /* ── Note de lecture ── */
+    /* ── Note de lecture toolbar ── */
+    .toolbar-note {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #EEF5FF;
+      border: 1px solid #C5D8F5;
+      border-left: 3px solid var(--ft-blue);
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 11px;
+      color: var(--ft-grey-800);
+      line-height: 1.4;
+      max-width: 320px;
+      flex-shrink: 0;
+    }
+    .toolbar-note-icon {
+      font-size: 14px;
+      flex-shrink: 0;
+      opacity: .8;
+    }
+    .toolbar-note-label {
+      font-weight: 700;
+      color: var(--ft-blue-dark);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      display: block;
+      margin-bottom: 1px;
+    }
+
     .note-panel {
       background: linear-gradient(135deg, #EEF5FF 0%, #E8F7F7 100%);
       border-top: 2px solid var(--ft-grey-200);
@@ -854,6 +887,13 @@
     <button class="ind-btn" data-ind="DELTA_TX_PRESEMPM6" id="btn-DELTA_TX_PRESEMPM6">
       <span class="dot"></span>Écart TPE<span class="def-badge">?</span>
     </button>
+  </div>
+  <div class="toolbar-note">
+    <span class="toolbar-note-icon">📋</span>
+    <div>
+      <span class="toolbar-note-label">Note de lecture</span>
+      Cohortes nov.&nbsp;2024 – oct.&nbsp;2025 · inscrits fin de mois cat.&nbsp;A, B, F, G · observation à&nbsp;6&nbsp;mois
+    </div>
   </div>
   <div class="toolbar-spacer"></div>
   <div class="stat-chip" id="stat-chip">— CLPE chargés</div>
