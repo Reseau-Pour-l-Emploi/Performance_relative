@@ -1,5 +1,3 @@
-<script data-goatcounter="https://denisft.goatcounter.com/count"
-        async src="//gc.zgo.at/count.js"></script>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -649,34 +647,52 @@
 
     /* ── Note de lecture ── */
     /* ── Note de lecture toolbar ── */
-    .toolbar-note {
+    .note-btn-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+    .note-btn {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       background: #EEF5FF;
       border: 1px solid #C5D8F5;
-      border-left: 3px solid var(--ft-blue);
       border-radius: 6px;
       padding: 5px 10px;
-      font-size: 11px;
+      font-size: 12px;
+      color: var(--ft-blue-dark);
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+    .note-btn:hover { background: #dceafe; }
+    .note-bubble {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      background: white;
+      border: 1px solid #C5D8F5;
+      border-left: 3px solid var(--ft-blue);
+      border-radius: 8px;
+      padding: 10px 13px;
+      font-size: 11.5px;
       color: var(--ft-grey-800);
-      line-height: 1.4;
-      max-width: 320px;
-      flex-shrink: 0;
+      line-height: 1.55;
+      width: 300px;
+      box-shadow: 0 4px 16px rgba(0,0,0,.1);
+      z-index: 9999;
     }
-    .toolbar-note-icon {
-      font-size: 14px;
-      flex-shrink: 0;
-      opacity: .8;
-    }
-    .toolbar-note-label {
+    .note-bubble.open { display: block; }
+    .note-bubble-title {
       font-weight: 700;
       color: var(--ft-blue-dark);
       font-size: 10px;
       text-transform: uppercase;
-      letter-spacing: .05em;
-      display: block;
-      margin-bottom: 1px;
+      letter-spacing: .06em;
+      margin-bottom: 5px;
     }
 
     .note-panel {
@@ -888,11 +904,13 @@
       <span class="dot"></span>Écart TPE<span class="def-badge">?</span>
     </button>
   </div>
-  <div class="toolbar-note">
-    <span class="toolbar-note-icon">📋</span>
-    <div>
-      <span class="toolbar-note-label">Note de lecture</span>
-      Cohortes nov.&nbsp;2024 – oct.&nbsp;2025 · inscrits fin de mois cat.&nbsp;A, B, F, G · observation à&nbsp;6&nbsp;mois
+  <div class="note-btn-wrap">
+    <button class="note-btn" id="note-btn">💡 Note de lecture</button>
+    <div class="note-bubble" id="note-bubble">
+      <div class="note-bubble-title">📋 Note de lecture</div>
+      Cohortes de <strong>novembre 2024 à octobre 2025</strong><br>
+      Inscrits en fin de mois en catégories <strong>A, B, F et G</strong><br>
+      Observés à <strong>6 mois</strong>
     </div>
   </div>
   <div class="toolbar-spacer"></div>
@@ -1095,11 +1113,12 @@ const RAMP = ['#EAF4FB','#B0D6EF','#71B3DC','#328FC8','#005EB8'];
 const map = L.map('map', {
   center: [46.5, 2.5],
   zoom: 6,
+  minZoom: 6,
   zoomControl: false,
   dragging: false,
-  scrollWheelZoom: false,
-  doubleClickZoom: false,
-  touchZoom: false,
+  scrollWheelZoom: true,
+  doubleClickZoom: true,
+  touchZoom: true,
   keyboard: false,
   boxZoom: false,
   maxBounds: [[-5, -10], [55, 15]],
@@ -1602,6 +1621,17 @@ document.addEventListener('click', e => {
   if (!popup.contains(e.target)) {
     popup.classList.remove('open');
   }
+});
+
+/* ── Note de lecture bouton ── */
+const noteBtn = document.getElementById('note-btn');
+const noteBubble = document.getElementById('note-bubble');
+noteBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  noteBubble.classList.toggle('open');
+});
+document.addEventListener('click', e => {
+  if (!noteBtn.contains(e.target)) noteBubble.classList.remove('open');
 });
 
 /* ══════════════════════════════════════════════
