@@ -646,6 +646,58 @@
     #loading p { font-size: 14px; color: var(--ft-grey-600); font-weight: 500; }
 
     /* ── Note de lecture ── */
+    /* ── Filtres cascadants ── */
+    #clpe-filters {
+      padding: 10px 12px 6px;
+      border-bottom: 1px solid var(--ft-grey-200);
+      background: var(--ft-grey-50, #f8f9fb);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .fil-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .fil-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--ft-grey-600);
+      width: 84px;
+      flex-shrink: 0;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .fil-select {
+      flex: 1;
+      font-size: 12px;
+      font-family: inherit;
+      border: 1px solid var(--ft-grey-300);
+      border-radius: 4px;
+      padding: 4px 6px;
+      background: white;
+      color: var(--ft-grey-800);
+      cursor: pointer;
+      min-width: 0;
+    }
+    .fil-select:disabled {
+      background: var(--ft-grey-100, #eee);
+      color: var(--ft-grey-400);
+      cursor: not-allowed;
+    }
+    .fil-select:focus { outline: 2px solid var(--ft-blue); outline-offset: 1px; }
+    .fil-note {
+      font-size: 11px;
+      color: var(--ft-grey-600);
+      background: #EEF5FF;
+      border-left: 3px solid var(--ft-blue);
+      border-radius: 0 4px 4px 0;
+      padding: 5px 8px;
+      line-height: 1.4;
+      margin-top: 2px;
+    }
+
     /* ── Note de lecture toolbar ── */
     .note-btn-wrap {
       position: relative;
@@ -879,7 +931,7 @@
     </div>
   </div>
   <div class="header-sep"></div>
-  <div class="header-title">Carte des Comités Locaux Pour l'Emploi - Performance relative</div>
+  <div class="header-title">Carte des Comités Locaux Pour l'Emploi</div>
   <button class="header-methodo-btn" id="methodo-btn">
     <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8">
       <circle cx="7" cy="7" r="6"/><line x1="7" y1="6" x2="7" y2="10"/><circle cx="7" cy="4" r=".6" fill="currentColor" stroke="none"/>
@@ -932,6 +984,21 @@
         <div class="sidebar-clpe-name" id="sb-name">—</div>
         <div class="sidebar-meta" id="sb-meta">—</div>
       </div>
+    </div>
+    <div id="clpe-filters">
+      <div class="fil-row">
+        <label class="fil-label">Région</label>
+        <select id="fil-region" class="fil-select"><option value="">— Toutes —</option></select>
+      </div>
+      <div class="fil-row">
+        <label class="fil-label">Département</label>
+        <select id="fil-dept" class="fil-select" disabled><option value="">— Tous —</option></select>
+      </div>
+      <div class="fil-row">
+        <label class="fil-label">CLPE</label>
+        <select id="fil-clpe" class="fil-select" disabled><option value="">— Tous —</option></select>
+      </div>
+      <div class="fil-note">💡 Sélectionnez un CLPE via les filtres ou via la carte pour visualiser les données.</div>
     </div>
     <div id="sidebar-content" class="table-wrap">
       <!-- Table chargée par JS après boot -->
@@ -1276,6 +1343,7 @@ async function loadAll() {
   updateLegend();
   document.getElementById('stat-chip').innerHTML =
     `<strong>${Object.keys(clpeData).length}</strong> CLPE chargés`;
+  initFilters();
   document.getElementById('loading').style.display = 'none';
 
   // Afficher le tableau complet dès le boot (aucune sélection)
@@ -1388,6 +1456,7 @@ function selectClpe(id, data) {
   applySelectionStyles();
   updateSidebar(id, data);
   document.getElementById('legend-nearby').style.display = 'flex';
+  syncFilters(id, data);
 }
 
 function applySelectionStyles() {
@@ -1624,6 +1693,71 @@ document.addEventListener('click', e => {
     popup.classList.remove('open');
   }
 });
+
+/* ── Filtres cascadants ── */
+function initFilters() {
+  const rows = Object.values(clpeData);
+  const regions = [...new Set(rows.map(r => r.C_LBLREGION))].sort();
+  const selReg = document.getElementById('fil-region');
+  const selDept = document.getElementById('fil-dept');
+  const selClpe = document.getElementById('fil-clpe');
+
+  regions.forEach(r => {
+    const o = document.createElement('option'); o.value = r; o.textContent = r;
+    selReg.appendChild(o);
+  });
+
+  selReg.addEventListener('change', () => {
+    const reg = selReg.value;
+    selDept.innerHTML = '<option value="">— Tous —</option>';
+    selClpe.innerHTML = '<option value="">— Tous —</option>';
+    selDept.disabled = !reg;
+    selClpe.disabled = true;
+    if (!reg) return;
+    const depts = [...new Set(rows.filter(r => r.C_LBLREGION === reg).map(r => r.C_LBLDEPARTEMENT))].sort();
+    depts.forEach(d => {
+      const o = document.createElement('option'); o.value = d; o.textContent = d;
+      selDept.appendChild(o);
+    });
+  });
+
+  selDept.addEventListener('change', () => {
+    const dept = selDept.value;
+    selClpe.innerHTML = '<option value="">— Tous —</option>';
+    selClpe.disabled = !dept;
+    if (!dept) return;
+    const clpes = rows.filter(r => r.C_LBLDEPARTEMENT === dept).sort((a,b) => a.C_LBLTERRITOIRE.localeCompare(b.C_LBLTERRITOIRE));
+    clpes.forEach(c => {
+      const o = document.createElement('option'); o.value = c.C_TERRITOIRE_ID; o.textContent = c.C_LBLTERRITOIRE;
+      selClpe.appendChild(o);
+    });
+  });
+
+  selClpe.addEventListener('change', () => {
+    const id = selClpe.value;
+    if (!id) return;
+    const data = clpeData[id];
+    if (data) selectClpe(id, data);
+  });
+}
+
+function syncFilters(id, data) {
+  const selReg = document.getElementById('fil-region');
+  const selDept = document.getElementById('fil-dept');
+  const selClpe = document.getElementById('fil-clpe');
+  if (!selReg) return;
+
+  // Set région
+  selReg.value = data.C_LBLREGION;
+  selReg.dispatchEvent(new Event('change'));
+
+  // Set département
+  selDept.value = data.C_LBLDEPARTEMENT;
+  selDept.dispatchEvent(new Event('change'));
+
+  // Set CLPE
+  selClpe.value = id;
+}
 
 /* ── Note de lecture bouton ── */
 const noteBtn = document.getElementById('note-btn');
